@@ -43,7 +43,7 @@ These can be safely ignored.
 Each test, one for each of the Lapack routines, compares the output for that test (in
 `tests/output`) against the expected output (in `tests/expected`). If the codes are
 working correctly (as they should) then you should see no output from the tests. To be
-doubly sure you run `make diff` from the `tests` directory. The `.diff` files will be
+doubly sure you can run `make diff` from the `tests` directory. The `.diff` files will be
 non-empty only when there was a problem with that particular test.
 
 Simon Wright has kindly provided a set of GNAT project files that can
