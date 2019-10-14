@@ -46,7 +46,7 @@ working correctly (as they should) then you should see no output from the tests.
 doubly sure you can run `make diff` from the `tests` directory. The `.diff` files will be
 non-empty only when there was a problem with that particular test.
 
-Simon Wright has kindly provided a set of GNAT project files that can
+[Simon Wright](https://github.com/simonjwright) has kindly provided a set of GNAT project files that can
 be used to compile the package and any project that uses the package.
 
 To compile the package type
