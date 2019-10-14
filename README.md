@@ -35,8 +35,8 @@ The compilation and testing can be done separately using
 
 The compiler will report warnings of the form
 
-ada\_lapack.adb:14444:10: info: code between label and backwards goto rewritten as loop
-ada\_lapack.adb:14470:10: info: code between label and backwards goto rewritten as loop
+    ada_lapack.adb:14444:10: info: code between label and backwards goto rewritten as loop
+    ada_lapack.adb:14470:10: info: code between label and backwards goto rewritten as loop
 
 These can be safely ignored.
 
