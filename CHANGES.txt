@@ -1,0 +1,58 @@
+13-Oct-2019 -------------------------------------------------------------------
+
+   Copied the Sourceforge site to GitHub.
+   Switched from Mercurial to Git.
+   Created a README.md file.
+   Refactored the Makefile's.
+   No changes to the Ada Lapack codes.
+
+06-Aug-2013 -------------------------------------------------------------------
+
+   New procedures in this release are
+
+      syev, syevd, sysv, heev and heevd
+         (implementing dsyev, dsyevd, dsysv, zheev, zheevd and zsysv).
+
+   The driver codes have also been extended and now include
+
+      MatrixDeterm, MatrixInverse,
+      Eigenvalues, EigenvaluesRealSymm, EigenvaluesHermSymm,
+      Eigensystem, EigensystemRealSymm, EigensystemHermSymm,
+      SolveSystem, SolveSystemRealSymm, SolveSystemHermSymm
+
+   These provide a more familiar Ada style interface to the Lapack routines.
+   There are, as yet, no similar drivers for the singular value decomposition
+   procedures (gesv,gesdd).
+
+03-Jan-2013 -------------------------------------------------------------------
+
+   The most significant change since the initial release is the change in the
+   package spec to use the standard real and complex arrays provided by Ada.Numerics.
+   The package now conforms with Ada Annex G.3.
+
+   New procedures in this release are
+
+      gesdd and gesvd (implementing dgesdd, dgesvd, zgesdd and zgesvd).
+
+   Minor housekeeping has also be done to the code base.
+
+14-Aug-2012 -------------------------------------------------------------------
+
+   This is the first release.
+
+   This includes the Lapack codes (in ada_lapack)
+
+      geev, gesv, getrf, getri, getrs
+
+   which provide native Ada implementations of the standard Lapack codes
+
+      dgeev, dgesv, dgetrf, dgetri, dgetrs,
+      zgeev, zgesv, zgetrf, zgetri, zgetrs
+
+   These codes were derived from the Lapack-3.4.1 base.
+
+   There are also some driver codes
+
+      MatrixDeterm, MatrixInverse
+      Eigenvalues, Eigensystem
+      SolveSystem

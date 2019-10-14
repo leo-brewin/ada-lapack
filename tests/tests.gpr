@@ -1,0 +1,36 @@
+--  Copying and distribution of this file, with or without modification,
+--  are permitted in any medium without royalty provided the copyright
+--  notice and this notice are preserved.  This file is offered as-is,
+--  without any warranty.
+
+--  Copyright (C) 2012 Simon Wright <simon@pushface.org>
+
+with "../ada_lapack";
+
+project Tests is
+
+   for Exec_Dir use ".";
+   for Object_Dir use ".build";
+
+   package Compiler is
+      for Default_Switches ("Ada") use
+        (
+         "-gnat12",  --  Ada 2012 required
+         "-g",       --  for debug symbols
+         "-O3",      --  standard optimisation
+         "-gnatqQ",  --  to keep ALI files even if there are compilation errors
+         "-gnatafo", --  assertions, full reports, integer overflow
+         "-gnatwA"   --  turn off warnings
+        );
+   end Compiler;
+
+   package Binder is
+
+      for Default_Switches ("ada") use
+        (
+         "-E"        --  keep stack traces
+        );
+
+   end Binder;
+
+end Tests;

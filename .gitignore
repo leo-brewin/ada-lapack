@@ -1,0 +1,6 @@
+.DS_Store
+.tm_properties
+.build*
+lib*
+private
+TO-DO.txt

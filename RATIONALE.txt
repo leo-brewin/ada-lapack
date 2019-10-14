@@ -1,0 +1,151 @@
+gnat-2012
+---------
+
+The Fortran version of Lapack allows the WORK array to be changed within
+functions DLANGE and ZLANGE. This is essential for the proper working of
+Lapack. But prior to Ada2012, this was strictly forbidden in Ada.
+
+So, either we change the code for this pair of functions or we use Ada2012.
+I opted for the later (on the grounds of making the least number of changes
+needed to obtain correct code).
+
+Array arguments
+---------------
+
+Lapack and Blas codes are littered with calls like
+
+   call DSCAL (N,DA,V(I,1),LDV)
+
+The intention here is to scale row I of the matrix V by the real number DA.
+This is implemented in DSCAL by recasting the matrix V as a long vector DX.
+Stepping over columns of V is then equivalent to stepping through (a subset of)
+DX using LDV as the stride.
+
+To recast the matrix V as a vector in DSCAL I rewrote the header of the body
+for DSCAL.adb from
+
+      procedure DSCAL ( N    : Integer;
+                        DA   : Real;
+                        DX   : in out Ftn_Real_Vector;
+                        INCX : Integer ) is
+to
+
+      procedure DSCAL ( N      : Integer;
+                        DA     : Real;
+                        DX_adr : Address;
+                        INCX   : Integer ) is
+
+         DX : Ftn_Real_Vector (1 .. N * INCX);
+
+         for DX'Address use DX_adr;
+
+         pragma Import (Ada, DX);
+
+As a consequence, calls to DSCAL in the body of other Blas and Lapack codes had
+to be changed from
+
+      DSCAL ( N, DA, V(I,1), LDV );
+
+to
+
+      DSCAL ( N, DA, V(I,1)'Address, LDV );
+
+Though this works it does introduce a possible problem. The size of the vector
+DX was inferred by reading the original Fortran code. It creates a worst case
+scenario. If the array being passed to DSCAL contains less than N*INCX elements
+then DX will not only cover the passed array but it will extend beyond that
+array -- it will overlay other areas of memory and thus the door opens on doing
+nasty things. The assumption that I have to make is that the Lapack and Blas
+codes do not access elements beyond what the documentation claims. I would rather
+that Ada could do this housekeeping but that is not possible (as far as I can
+tell).
+
+I have not applied this change to every Blas and Lapack routine. Rather, I have
+taken the minimalist approach -- just change those routines (and calls) that
+need it.
+
+Fortran array convention
+------------------------
+
+The second issue is that of row-column ordering. Fortran and Ada have different
+conventions and thus to ensure that the Ada version of DSCALE really does step
+across columns of the matrix V we have to declare the arrays using the Fortran
+convention. Thus in the Lapack.ads spec file the types Ftn_Real_Vector and
+Ftn_Real_Matrix are declared as
+
+   type Ftn_Real_Vector is
+      array (Integer range <>) of Real'Base with convention => Fortran;
+   type Ftn_Real_Matrix is
+      array (Integer range <>, Integer range <>) of Real'Base with convention => Fortran;
+
+with similar declarations for other array types.
+
+Ada Row major versus Fortran Column major order
+-----------------------------------------------
+
+Multidimensional arrays in Ada are (usually) mapped to memory in row major
+form. However the Lapack codes, based on the Fortran sources, assumes a column
+major ordering. This introduces a problem similar to that discussed above. If we
+declare a matrix using the standard generic packages from Annex G.3 (e.g.,
+Ada.Numerics.Generic_Real_Arrays) and then pass that array down to the
+Lapack codes, the Lapack codes will process that array in column major
+form. The effect is to work with the transpose of the original matrix. One
+solution is to declare, at the outset, that the Ada array uses the Fortran
+convention. But this does not sit well with many existing codes -- most
+codes will not use the Fortran convention. This would force the user to add
+extra code to take the transpose of the matrix -- this is not a good
+solution. A better solution is to provide an simple interface between the
+Ada and Lapack codes. Here is an example of the interface for the GETRF
+routine. In the ada_lapack.ads file we have a public specification (equivalent to)
+
+   type Real_Matrix    is array (integer range <>, Integer range <>) of Real'Base;
+   type Integer_Vector is array (integer range <>) of Integer;
+
+   procedure GETRF
+     (M    : Integer;
+      N    : Integer;
+      A    : in out Real_Matrix;
+      LDA  : Integer;
+      IPIV : in out Integer_Vector;
+      INFO : in out Integer);
+
+followed by some private declarations
+
+private
+
+   type Ftn_Real_Matrix
+        is array (Integer range <>, Integer range <>) of Real'Base with convention => Fortran;
+
+   type Ftn_Integer_Vector
+        is array (integer range <>) of Integer with convention => Fortran;
+
+   procedure DGETRF
+     (M    : Integer;
+      N    : Integer;
+      A    : in out Ftn_Real_Matrix;
+      LDA  : Integer;
+      IPIV : in out Ftn_Integer_Vector;
+      INFO : in out Integer);
+
+Then in the ada_lapack.adb body we have
+
+   procedure GETRF
+     (M    : Integer;
+      N    : Integer;
+      A    : in out Real_Matrix;
+      LDA  : Integer;
+      IPIV : in out Integer_Vector;
+      INFO : in out Integer)
+   is
+      Ftn_A    : Ftn_Real_Matrix    := Ftn_Real_Matrix    (A);
+      Ftn_IPIV : Ftn_Integer_Vector := Ftn_Integer_Vector (IPIV);
+   begin
+
+      DGETRF (M, N, Ftn_A, LDA, Ftn_IPIV, INFO);
+
+      A    := Real_Matrix    (Ftn_A);
+      IPIV := Integer_Vector (Ftn_IPIV);
+
+   end GETRF;
+
+This does all the index gymnastics required.
